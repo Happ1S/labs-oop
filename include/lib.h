@@ -1,3 +1,3 @@
-#pragma once
+#include <iostream>
 
-int A();
+bool correct_parentheses_sequence(std::string s);
