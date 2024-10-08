@@ -1,7 +1,6 @@
 #include "../../include/Octal.h"
 #include <cstring>
 #include <algorithm>
-#include <stdexcept>  
 
 Octal::Octal() : _digits(nullptr), _capacity(0), size(0) {}
 
