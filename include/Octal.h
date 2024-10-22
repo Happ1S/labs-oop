@@ -32,4 +32,4 @@ private:
     void reverse();
 };
 
-#endif // OCTAL_H
+#endif

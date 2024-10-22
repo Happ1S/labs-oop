@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(lab2
+project(lab3
 	DESCRIPTION "Program that checks correctness parentheses sequence")
 
 set(CMAKE_CXX_STANDARD 20)
