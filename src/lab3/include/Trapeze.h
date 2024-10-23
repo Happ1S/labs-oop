@@ -15,15 +15,6 @@ public:
     
     Trapeze(const Trapeze& other) = default;
     Trapeze(Trapeze&& other) noexcept = default;
-    Trapeze& operator=(const Trapeze& other) = default;
-    Trapeze& operator=(Trapeze&& other) noexcept = default;
-
-    bool operator==(const Trapeze& other) const {
-        return x1 == other.x1 && y1 == other.y1 &&
-               x2 == other.x2 && y2 == other.y2 &&
-               x3 == other.x3 && y3 == other.y3 &&
-               x4 == other.x4 && y4 == other.y4;
-    }
 
     std::pair<double, double> getCenter() const override;
     double area() const override;
@@ -31,6 +22,16 @@ public:
     void read(std::istream& is) override;
     friend std::ostream& operator<<(std::ostream& os, const Trapeze& trapezoid);
     friend std::istream& operator>>(std::istream& is, Trapeze& trapezoid);
+        
+    operator double() const { return area(); }
+    Trapeze& operator=(const Trapeze& other) = default;
+    Trapeze& operator=(Trapeze&& other) noexcept = default;
+    bool operator==(const Trapeze& other) const {
+        return x1 == other.x1 && y1 == other.y1 &&
+               x2 == other.x2 && y2 == other.y2 &&
+               x3 == other.x3 && y3 == other.y3 &&
+               x4 == other.x4 && y4 == other.y4;
+    }
 };
 
 #endif 

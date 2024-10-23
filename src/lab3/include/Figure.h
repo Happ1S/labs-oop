@@ -11,6 +11,7 @@ public:
     virtual double area() const = 0;
     virtual void print(std::ostream& os) const = 0;
     virtual void read(std::istream& is) = 0;
+    virtual operator double() const { return area(); }
     friend std::ostream& operator<<(std::ostream& os, const Figure& figure) {
         figure.print(os);
         return os;

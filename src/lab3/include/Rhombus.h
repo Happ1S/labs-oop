@@ -17,7 +17,6 @@ public:
     Rhombus(Rhombus&& other) noexcept = default;
     Rhombus& operator=(const Rhombus& other) = default;
     Rhombus& operator=(Rhombus&& other) noexcept = default;
-
     bool operator==(const Rhombus& other) const {
         return x1 == other.x1 && y1 == other.y1 &&
                x2 == other.x2 && y2 == other.y2 &&

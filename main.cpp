@@ -50,14 +50,14 @@ void printFigures(const std::vector<std::unique_ptr<Figure>>& figures) {
         std::cout << "\n";
         auto center = figures[i]->getCenter();
         std::cout << "Геометрический центр: (" << center.first << ", " << center.second << ")\n";
-        std::cout << "Площадь: " << figures[i]->area() << "\n";
+        std::cout << "Площадь: " << static_cast<double>(*figures[i]) << "\n";
     }
 }
 
 double totalArea(const std::vector<std::unique_ptr<Figure>>& figures) {
     double total = 0;
     for (const auto& figure : figures) {
-        total += figure->area();
+        total += static_cast<double>(*figure);
     }
     return total;
 }
@@ -72,8 +72,8 @@ void deleteFigure(std::vector<std::unique_ptr<Figure>>& figures) {
     std::cout << "Введите индекс фигуры для удаления: ";
     std::cin >> index;
 
-    if (index >= 1 && index <= static_cast<int>(figures.size())) {
-        figures.erase(figures.begin() + index - 1);
+    if (index >= 0 && index <= static_cast<int>(figures.size()) - 1) {
+        figures.erase(figures.begin() + index);
         std::cout << "Фигура удалена!\n";
     } else {
         std::cout << "Неверный индекс!\n";
