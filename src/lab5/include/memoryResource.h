@@ -1,24 +1,23 @@
-#ifndef MemoryResource_H
-#define MemoryResource_H
+#ifndef MEMORYRESOURCE_H
+#define MEMORYRESOURCE_H
 
 #include <memory_resource>
 #include <map>
+#include <cstddef>
 
 class MemoryResource : public std::pmr::memory_resource {
 public:
-    MemoryResource(size_t block_size);
+    explicit MemoryResource();
     ~MemoryResource();
 
 protected:
-    void* do_allocate(size_t bytes, size_t alignment) override;
-    void do_deallocate(void* p, size_t bytes, size_t alignment) override;
+    void* do_allocate(std::size_t bytes, std::size_t alignment) override;
+    void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) override;
     bool do_is_equal(const std::pmr::memory_resource& other) const noexcept override;
 
 private:
-    size_t block_size_;
-    char* memory_;
-    char* free_memory_;
+    // Карта для управления блоками (размер -> указатель на блок)
     std::map<size_t, void*> allocated_blocks_;
 };
 
-#endif
+#endif // MEMORYRESOURCE_H

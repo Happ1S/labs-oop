@@ -43,7 +43,7 @@ void test_with_complex_type(MemoryResource& resource) {
 }
 
 int main() {
-    MemoryResource resource(1024);
+    MemoryResource resource;
 
     try {
         test_with_int(resource);
