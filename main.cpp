@@ -1,7 +1,7 @@
 #include "src/lab5/include/memoryResource.h"
 #include "src/lab5/include/linkinList.h"
 #include "src/lab5/memoryResource.cpp"
-#include "src/lab5/linkinList.cpp"
+#include "src/lab5/linkinList.tpp"
 #include <iostream>
 #include <string>
 

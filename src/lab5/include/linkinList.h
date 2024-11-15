@@ -60,7 +60,7 @@ public:
     // Конструкторы и деструктор
     explicit LinkedList(std::pmr::memory_resource* resource = std::pmr::get_default_resource())
         : allocator_(resource), head_(nullptr), size_(0) {}
-    
+
     ~LinkedList();
 
     // Методы для работы со списком
@@ -74,4 +74,6 @@ public:
     iterator end() { return iterator(nullptr); }
 };
 
-#endif
+#include "../linkinList.tpp"
+
+#endif // LINKED_LIST_H
