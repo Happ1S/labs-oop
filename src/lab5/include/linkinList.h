@@ -19,7 +19,6 @@ private:
     size_t size_;
 
 public:
-    // Определение итератора
     class iterator {
     public:
         using iterator_category = std::forward_iterator_tag;
@@ -57,19 +56,16 @@ public:
         }
     };
 
-    // Конструкторы и деструктор
     explicit LinkedList(std::pmr::memory_resource* resource = std::pmr::get_default_resource())
         : allocator_(resource), head_(nullptr), size_(0) {}
 
     ~LinkedList();
 
-    // Методы для работы со списком
     void push_front(const T& value);
     void pop_front();
     size_t size() const { return size_; }
     bool empty() const { return size_ == 0; }
 
-    // Итераторы
     iterator begin() { return iterator(head_); }
     iterator end() { return iterator(nullptr); }
 };
