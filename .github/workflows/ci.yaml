@@ -1,33 +1,38 @@
-name: Build and Test
+name: Build and Run Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main, master]
   pull_request:
-    branches: [ main ]
+    branches: [main, master]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      # Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set up C++ Compiler
-      uses: actions/setup-cpp@v1
-      with:
-        compiler: gcc
+      # Install dependencies
+      - name: Install googletest
+        uses: cvpkg/googletest-action@v0.1
+        with:
+          googletest_tag: 'release-1.11.0'
 
-    - name: Install dependencies
-      run: sudo apt-get install -y cmake build-essential
+      # Install Clang-Tidy
+      - name: Install Clang-Tidy
+        run: sudo apt-get install -y clang-tidy
 
-    - name: Configure CMake
-      run: cmake -B build -S . -DCMAKE_CXX_STANDARD=20
+      # Run Clang-Tidy for linting C++ code
+      - name: Run Clang-Tidy
+        run: |
+          clang-tidy src/**/*.cpp -- -I/path/to/your/include/files
 
-    - name: Build
-      run: cmake --build build
+      # Build project
+      - name: Build Project
+        run: make build
 
-    - name: Run Tests
-      run: ctest --test-dir build
+      # Run tests
+      - name: Run Tests
+        run: make test
