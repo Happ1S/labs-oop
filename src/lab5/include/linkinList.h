@@ -3,7 +3,6 @@
 
 #include <memory_resource>
 #include <iterator>
-#include "../linkinList.cpp"
 
 template<typename T>
 class LinkedList {
@@ -70,5 +69,7 @@ public:
     iterator begin() { return iterator(head_); }
     iterator end() { return iterator(nullptr); }
 };
+
+#include "../linkinList.tpp"
 
 #endif
