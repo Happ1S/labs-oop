@@ -11,12 +11,13 @@
 template <typename T>
 concept Scalar = std::is_arithmetic_v<T>;
 
-template <Scalar T>
-class Point {
-public:
-    T first, second; 
+template <typename T>
+struct Point {
+    T first, second;
 
-    Point(T first = 0, T second = 0) : first(first), second(second) {}
+    bool operator==(const Point<T>& other) const {
+        return (this->first == other.first && this->second == other.second);
+    }
 };
 
 template <Scalar T>

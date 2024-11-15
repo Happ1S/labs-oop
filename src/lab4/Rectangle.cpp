@@ -30,3 +30,5 @@ void Rectangle<T>::read(std::istream& is) {
        >> this->vertices[2]->first >> this->vertices[2]->second
        >> this->vertices[3]->first >> this->vertices[3]->second;
 }
+
+template class Rectangle<double>;
