@@ -29,10 +29,14 @@ jobs:
         run: |
           clang-tidy src/**/*.cpp -- -I/path/to/your/include/files
 
+      # Configure project with CMake
+      - name: Configure Project
+        run: cmake -S . -B build -DCMAKE_CXX_STANDARD=20
+
       # Build project
       - name: Build Project
-        run: make -DCMAKE_CXX_STANDARD=20 build
+        run: cmake --build build
 
       # Run tests
       - name: Run Tests
-        run: make test
+        run: ctest --test-dir build
