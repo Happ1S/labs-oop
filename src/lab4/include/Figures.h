@@ -9,7 +9,7 @@
 #include <cmath>
 
 template <typename T>
-concept Scalar = std::is_arithmetic<T>;
+concept Scalar = std::is_arithmetic_v<T>;
 
 template <typename T>
 struct Point {
@@ -165,13 +165,13 @@ public:
         this->vertices.emplace_back(std::make_unique<Point<T>>(0, 0));
     }
 
-    std::pair<double, double> getCenter() const override;
+    std::pair<double, double> getCenter() const ;
 
-    double area() const override;
+    double area() const ;
 
-    void print(std::ostream& os) const override;
+    void print(std::ostream& os) const ;
 
-    void read(std::istream& is) override;
+    void read(std::istream& is) ;
 
     template <typename U>
     friend std::ostream& operator<<(std::ostream& os, const Rectangle<U>& rectangle);
@@ -201,13 +201,13 @@ public:
                *this->vertices[3] == *other.vertices[3];
     }
 
-    std::pair<double, double> getCenter() const override;
+    std::pair<double, double> getCenter() const ;
 
-    double area() const override;
+    double area() const ;
 
-    void print(std::ostream& os) const override;
+    void print(std::ostream& os) const ;
 
-    void read(std::istream& is) override;
+    void read(std::istream& is) ;
 
     template <typename U>
     friend std::ostream& operator<<(std::ostream& os, const Rhombus<U>& rhombus);
@@ -237,13 +237,13 @@ public:
                *this->vertices[3] == *other.vertices[3];
     }
 
-    std::pair<double, double> getCenter() const override;
+    std::pair<double, double> getCenter() const ;
 
-    double area() const override;
+    double area() const ;
 
-    void print(std::ostream& os) const override;
+    void print(std::ostream& os) const ;
 
-    void read(std::istream& is) override;
+    void read(std::istream& is) ;
 
     template <typename U>
     friend std::ostream& operator<<(std::ostream& os, const Trapeze<U>& trapezoid);
