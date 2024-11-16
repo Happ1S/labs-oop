@@ -28,7 +28,7 @@ jobs:
         run: sudo apt-get install -y clang-tidy
 
       - name: Run Clang-Tidy
-        run: clang-tidy src/**/*.cpp -- -I/path/to/your/include/files
+        run: clang-tidy src/**/*.cpp -- -std=c++20 -I/home/runner/work/labs-oop/labs-oop/src/lab4/include
 
       - name: Configure Project
         run: cmake -S . -B build -DCMAKE_CXX_STANDARD=20
