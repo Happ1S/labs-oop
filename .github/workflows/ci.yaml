@@ -34,7 +34,7 @@ jobs:
         run: cmake -S . -B build -DCMAKE_CXX_STANDARD=20
 
       - name: Build Project
-        run: cmake --build build
+        run: make build
 
       - name: Run Tests
-        run: ctest --test-dir build
+        run: make test
