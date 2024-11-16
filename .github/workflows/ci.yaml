@@ -31,7 +31,7 @@ jobs:
 
       # Build project
       - name: Build Project
-        run: make CXXFLAGS="-std=c++20" build
+        run: make -DCMAKE_CXX_STANDARD=20 build
 
       # Run tests
       - name: Run Tests
