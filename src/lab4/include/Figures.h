@@ -14,7 +14,7 @@ concept Scalar = std::is_arithmetic_v<T>;
 template <typename T>
 struct Point {
     T first, second;
-
+    Point(T x, T y) : first(x), second(y) {}
     bool operator==(const Point<T>& other) const {
         return (this->first == other.first && this->second == other.second);
     }
