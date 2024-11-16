@@ -9,7 +9,7 @@
 #include <cmath>
 
 template <typename T>
-concept Scalar = std::is_arithmetic_v<T>;
+concept Scalar = std::is_arithmetic<T>;
 
 template <typename T>
 struct Point {
