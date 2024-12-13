@@ -1,5 +1,6 @@
 #pragma once
 #include "npc.h"
+#include "fight_visitor.h"
 
 struct Bandit : public NPC
 {
@@ -8,7 +9,7 @@ struct Bandit : public NPC
 
     void print() override;
 
-    bool is_bandit() const override;
+    void accept(FightVisitor &visitor) override;
 
     bool fight(std::shared_ptr<Bear> other) override;
     bool fight(std::shared_ptr<Elf> other) override;

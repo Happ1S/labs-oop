@@ -16,26 +16,22 @@ void Elf::save(std::ostream &os)
     NPC::save(os);
 }
 
-bool Elf::is_elf() const
-{
-    return true;
+void Elf::accept(FightVisitor &visitor) {
+    visitor.visit(std::dynamic_pointer_cast<Elf>(shared_from_this()));
 }
 
-bool Elf::fight(std::shared_ptr<Bear> other)
-{
-    fight_notify(other, true);
-    return true;
+bool Elf::fight(std::shared_ptr<Bear> other) {
+    fight_notify(other, false); // Elves do not kill Bears
+    return false;
 }
 
-bool Elf::fight(std::shared_ptr<Elf> other)
-{
-    fight_notify(other, true);
-    return true;
+bool Elf::fight(std::shared_ptr<Elf> other) {
+    fight_notify(other, false); // Elves do not kill Elves
+    return false;
 }
 
-bool Elf::fight(std::shared_ptr<Bandit> other)
-{
-    fight_notify(other, true);
+bool Elf::fight(std::shared_ptr<Bandit> other) {
+    fight_notify(other, true); // Elves kill Bandits
     return true;
 }
 

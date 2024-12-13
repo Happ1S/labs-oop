@@ -16,27 +16,23 @@ void Bear::save(std::ostream &os)
     NPC::save(os);
 }
 
-bool Bear::is_bear() const
-{
-    return true;
+void Bear::accept(FightVisitor &visitor) {
+    visitor.visit(std::dynamic_pointer_cast<Bear>(shared_from_this()));
 }
 
-bool Bear::fight(std::shared_ptr<Bear> other)
-{
+bool Bear::fight(std::shared_ptr<Bear> other) {
     fight_notify(other, true);
     return true;
 }
 
-bool Bear::fight(std::shared_ptr<Elf> other)
-{
-    fight_notify(other, true);
+bool Bear::fight(std::shared_ptr<Elf> other) {
+    fight_notify(other, true); // Bears kill Elves
     return true;
 }
 
-bool Bear::fight(std::shared_ptr<Bandit> other)
-{
-    fight_notify(other, true);
-    return true;
+bool Bear::fight(std::shared_ptr<Bandit> other) {
+    fight_notify(other, false); // Bears do not kill Bandits
+    return false;
 }
 
 std::ostream &operator<<(std::ostream &os, Bear &bear)
