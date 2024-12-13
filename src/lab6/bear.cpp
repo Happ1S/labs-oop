@@ -16,11 +16,9 @@ void Bear::save(std::ostream &os)
     NPC::save(os);
 }
 
-bool Bear::accept(const std::shared_ptr<NPC>& attacker) {
-    if (auto elf = std::dynamic_pointer_cast<Elf>(attacker)) {
-        return attacker->fight(shared_from_this());
-    }
-    return false;
+bool Bear::is_bear() const
+{
+    return true;
 }
 
 bool Bear::fight(std::shared_ptr<Bear> other)

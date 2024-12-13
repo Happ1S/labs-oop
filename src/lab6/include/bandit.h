@@ -8,7 +8,7 @@ struct Bandit : public NPC
 
     void print() override;
 
-    bool accept(const std::shared_ptr<NPC>& attacker) override;
+    bool is_bandit() const override;
 
     bool fight(std::shared_ptr<Bear> other) override;
     bool fight(std::shared_ptr<Elf> other) override;

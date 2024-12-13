@@ -2,12 +2,12 @@
 
 #include <iostream>
 #include <memory>
-#include <vector>
-#include <cmath>
+#include <cstring>
 #include <string>
 #include <random>
 #include <fstream>
 #include <set>
+#include <math.h>
 
 // type for npcs
 struct NPC;
@@ -24,9 +24,8 @@ enum NpcType
     BanditType = 3
 };
 
-struct IFightObserver
-{
-    virtual void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) = 0;
+struct IFightObserver{
+    virtual void on_fight(const std::shared_ptr<NPC> attacker,const std::shared_ptr<NPC> defender,bool win) = 0;
 };
 
 struct NPC : public std::enable_shared_from_this<NPC>
@@ -39,17 +38,17 @@ struct NPC : public std::enable_shared_from_this<NPC>
     NPC(NpcType t, int _x, int _y);
     NPC(NpcType t, std::istream &is);
 
-    void subscribe(std::shared_ptr<IFightObserver> observer);
-    void fight_notify(const std::shared_ptr<NPC> defender, bool win);
+    void subscribe(std::shared_ptr<IFightObserver>observer );
+    void fight_notify(const std::shared_ptr<NPC> defender,bool win);
     virtual bool is_close(const std::shared_ptr<NPC> &other, size_t distance) const;
 
-    virtual bool accept(const std::shared_ptr<NPC> &attacker) = 0;
+    virtual bool is_bear() const;
+    virtual bool is_elf() const;
+    virtual bool is_bandit() const ;
 
     virtual bool fight(std::shared_ptr<Bear> other) = 0;
     virtual bool fight(std::shared_ptr<Elf> other) = 0;
     virtual bool fight(std::shared_ptr<Bandit> other) = 0;
-    bool fight(const std::shared_ptr<NPC> &other);
-
     virtual void print() = 0;
 
     virtual void save(std::ostream &os);

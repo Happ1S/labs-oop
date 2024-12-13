@@ -1,8 +1,4 @@
 #include "include/npc.h"
-#include <cmath>
-#include <iostream>
-#include <memory>
-#include <vector>
 
 NPC::NPC(NpcType t, int _x, int _y) : type(t), x(_x), y(_y) {}
 NPC::NPC(NpcType t, std::istream &is) : type(t)
@@ -13,7 +9,7 @@ NPC::NPC(NpcType t, std::istream &is) : type(t)
 
 void NPC::subscribe(std::shared_ptr<IFightObserver> observer)
 {
-    observers.push_back(observer);
+   observers.push_back(observer);
 }
 
 void NPC::fight_notify(const std::shared_ptr<NPC> defender, bool win)
@@ -24,18 +20,23 @@ void NPC::fight_notify(const std::shared_ptr<NPC> defender, bool win)
 
 bool NPC::is_close(const std::shared_ptr<NPC> &other, size_t distance) const
 {
-    return std::pow(x - other->x, 2) + std::pow(y - other->y, 2) <= std::pow(distance, 2);
+    if (std::pow(x - other->x, 2) + std::pow(y - other->y, 2) <= std::pow(distance, 2))
+        return true;
+    else
+        return false;
 }
 
-bool NPC::fight(const std::shared_ptr<NPC> &other)
+bool NPC::is_bear() const
 {
-    if (auto bear = std::dynamic_pointer_cast<Bear>(other))
-        return fight(bear);
-    else if (auto elf = std::dynamic_pointer_cast<Elf>(other))
-        return fight(elf);
-    else if (auto bandit = std::dynamic_pointer_cast<Bandit>(other))
-        return fight(bandit);
-    return false; // Неподдерживаемый тип
+    return false;
+}
+bool NPC::is_elf() const
+{
+    return false;
+}
+bool NPC::is_bandit() const
+{
+    return false;
 }
 
 void NPC::save(std::ostream &os)

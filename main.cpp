@@ -3,17 +3,11 @@
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
 
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <set>
-#include <string>
-
 // Text Observer
 class TextObserver : public IFightObserver
 {
 private:
-    TextObserver() {}
+    TextObserver(){};
 
 public:
     static std::shared_ptr<IFightObserver> get()
@@ -26,35 +20,10 @@ public:
     {
         if (win)
         {
-            std::cout << "Murder --------" << std::endl;
+            std::cout << std::endl
+                      << "Murder --------" << std::endl;
             attacker->print();
             defender->print();
-        }
-    }
-};
-
-// Log Observer
-class LogObserver : public IFightObserver
-{
-private:
-    LogObserver() {}
-
-public:
-    static std::shared_ptr<IFightObserver> get()
-    {
-        static LogObserver instance;
-        return std::shared_ptr<IFightObserver>(&instance, [](IFightObserver *) {});
-    }
-
-    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
-    {
-        std::ofstream log("log.txt", std::ios::app);
-        if (win && log.is_open())
-        {
-            log << "Murder --------" << std::endl;
-            attacker->save(log);
-            defender->save(log);
-            log.close();
         }
     }
 };
@@ -83,16 +52,14 @@ std::shared_ptr<NPC> factory(std::istream &is)
         std::cerr << "unexpected NPC type:" << type << std::endl;
 
     if (result)
-    {
         result->subscribe(TextObserver::get());
-        result->subscribe(LogObserver::get());
-    }
 
     return result;
 }
 
 std::shared_ptr<NPC> factory(NpcType type, int x, int y)
 {
+    std::cout << "Type:" << (int)type << std::endl;
     std::shared_ptr<NPC> result;
     switch (type)
     {
@@ -109,10 +76,7 @@ std::shared_ptr<NPC> factory(NpcType type, int x, int y)
         break;
     }
     if (result)
-    {
         result->subscribe(TextObserver::get());
-        result->subscribe(LogObserver::get());
-    }
 
     return result;
 }
@@ -153,7 +117,15 @@ std::ostream &operator<<(std::ostream &os, const set_t &array)
     return os;
 }
 
-// fight method using Visitor
+
+// ВНИМАНИЕ: метод осуществляющий сражение написан неправильно!
+// Переделайте его на использование паттерна Visitor
+// То есть внутри цикла вместо кучи условий должно быть:
+//
+// success = defender->accept(attacker);
+//
+// В NPC методы типа is_bear - станут не нужны
+
 set_t fight(const set_t &array, size_t distance)
 {
     set_t dead_list;
@@ -162,7 +134,13 @@ set_t fight(const set_t &array, size_t distance)
         for (const auto &defender : array)
             if ((attacker != defender) && (attacker->is_close(defender, distance)))
             {
-                bool success = defender->accept(attacker);
+                bool success{false};
+                if (defender->is_bear())
+                    success = attacker->fight(std::dynamic_pointer_cast<Bear>(defender));
+                if (defender->is_elf())
+                    success = attacker->fight(std::dynamic_pointer_cast<Elf>(defender));
+                if (defender->is_bandit())
+                    success = attacker->fight(std::dynamic_pointer_cast<Bandit>(defender));
                 if (success)
                     dead_list.insert(defender);
             }
@@ -198,8 +176,8 @@ int main()
         std::cout << "Fight stats ----------" << std::endl
                   << "distance: " << distance << std::endl
                   << "killed: " << dead_list.size() << std::endl
-                  << std::endl
-                  << std::endl;
+                  << std::endl << std::endl;
+
     }
 
     std::cout << "Survivors:" << array;

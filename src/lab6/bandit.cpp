@@ -16,11 +16,9 @@ void Bandit::save(std::ostream &os)
     NPC::save(os);
 }
 
-bool Bandit::accept(const std::shared_ptr<NPC>& attacker) {
-    if (auto elf = std::dynamic_pointer_cast<Bandit>(attacker)) {
-        return attacker->fight(shared_from_this());
-    }
-    return false;
+bool Bandit::is_bandit() const
+{
+    return true;
 }
 
 bool Bandit::fight(std::shared_ptr<Bear> other)
