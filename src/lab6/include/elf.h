@@ -1,0 +1,21 @@
+#pragma once
+#include "npc.h"
+
+struct Elf : public NPC
+{
+    Elf(int x, int y);
+    Elf(std::istream &is);
+
+    void print() override;
+
+    bool accept(const std::shared_ptr<NPC>& attacker) override;
+
+    bool fight(std::shared_ptr<Bear> other) override;
+    bool fight(std::shared_ptr<Elf> other) override;
+    bool fight(std::shared_ptr<Bandit> other) override;
+
+    void save(std::ostream &os) override;
+
+    friend std::ostream &operator<<(std::ostream &os, Elf &Elf);
+};
+

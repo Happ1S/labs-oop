@@ -1,58 +1,208 @@
-#include "src/lab5/include/memoryResource.h"
-#include "src/lab5/include/linkinList.h"
-#include "src/lab5/memoryResource.cpp"
-#include "src/lab5/linkinList.tpp"
+#include "src/lab6/include/npc.h"
+#include "src/lab6/include/bear.h"
+#include "src/lab6/include/elf.h"
+#include "src/lab6/include/bandit.h"
+
+#include <fstream>
 #include <iostream>
+#include <memory>
+#include <set>
 #include <string>
 
-struct ComplexType {
-    int id;
-    double value;
+// Text Observer
+class TextObserver : public IFightObserver
+{
+private:
+    TextObserver() {}
 
-    ComplexType(int i = 0, double v = 0.0)
-        : id(i), value(v) {}
+public:
+    static std::shared_ptr<IFightObserver> get()
+    {
+        static TextObserver instance;
+        return std::shared_ptr<IFightObserver>(&instance, [](IFightObserver *) {});
+    }
+
+    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
+    {
+        if (win)
+        {
+            std::cout << "Murder --------" << std::endl;
+            attacker->print();
+            defender->print();
+        }
+    }
 };
-void test_with_int(MemoryResource& resource) {
-    LinkedList<int> list(&resource);
-    for (int i = 0; i < 5; ++i) {
-        list.push_front(i);
+
+// Log Observer
+class LogObserver : public IFightObserver
+{
+private:
+    LogObserver() {}
+
+public:
+    static std::shared_ptr<IFightObserver> get()
+    {
+        static LogObserver instance;
+        return std::shared_ptr<IFightObserver>(&instance, [](IFightObserver *) {});
     }
 
-    std::cout << "Int linked list content:" << std::endl;
-    for (const auto& item : list) {
-        std::cout << item << " ";
+    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
+    {
+        std::ofstream log("log.txt", std::ios::app);
+        if (win && log.is_open())
+        {
+            log << "Murder --------" << std::endl;
+            attacker->save(log);
+            defender->save(log);
+            log.close();
+        }
     }
-    std::cout << "\n";
+};
+
+// Фабрики -----------------------------------
+std::shared_ptr<NPC> factory(std::istream &is)
+{
+    std::shared_ptr<NPC> result;
+    int type{0};
+    if (is >> type)
+    {
+        switch (type)
+        {
+        case BearType:
+            result = std::make_shared<Bear>(is);
+            break;
+        case ElfType:
+            result = std::make_shared<Elf>(is);
+            break;
+        case BanditType:
+            result = std::make_shared<Bandit>(is);
+            break;
+        }
+    }
+    else
+        std::cerr << "unexpected NPC type:" << type << std::endl;
+
+    if (result)
+    {
+        result->subscribe(TextObserver::get());
+        result->subscribe(LogObserver::get());
+    }
+
+    return result;
 }
 
-void test_with_complex_type(MemoryResource& resource) {
-    std::cout << "\nComplex content of linked list:\n";
-    LinkedList<ComplexType> list(&resource);
-
-    // Добавление элементов
-    list.push_front(ComplexType(1, 1.1));
-    list.push_front(ComplexType(2, 2.2));
-    list.push_front(ComplexType(3, 3.3));
-
-    // Вывод элементов
-    for (const auto& item : list) {
-        std::cout << "ID: " << item.id 
-                  << ", Value: " << item.value << std::endl;
-
+std::shared_ptr<NPC> factory(NpcType type, int x, int y)
+{
+    std::shared_ptr<NPC> result;
+    switch (type)
+    {
+    case BearType:
+        result = std::make_shared<Bear>(x, y);
+        break;
+    case ElfType:
+        result = std::make_shared<Elf>(x, y);
+        break;
+    case BanditType:
+        result = std::make_shared<Bandit>(x, y);
+        break;
+    default:
+        break;
     }
+    if (result)
+    {
+        result->subscribe(TextObserver::get());
+        result->subscribe(LogObserver::get());
+    }
+
+    return result;
 }
 
-int main() {
-    MemoryResource resource;
+// save array to file
+void save(const set_t &array, const std::string &filename)
+{
+    std::ofstream fs(filename);
+    fs << array.size() << std::endl;
+    for (auto &n : array)
+        n->save(fs);
+    fs.flush();
+    fs.close();
+}
 
-    try {
-        test_with_int(resource);
-        test_with_complex_type(resource);
+set_t load(const std::string &filename)
+{
+    set_t result;
+    std::ifstream is(filename);
+    if (is.good() && is.is_open())
+    {
+        int count;
+        is >> count;
+        for (int i = 0; i < count; ++i)
+            result.insert(factory(is));
+        is.close();
     }
-    catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
+    else
+        std::cerr << "Error: " << std::strerror(errno) << std::endl;
+    return result;
+}
+
+// print to screen
+std::ostream &operator<<(std::ostream &os, const set_t &array)
+{
+    for (auto &n : array)
+        n->print();
+    return os;
+}
+
+// fight method using Visitor
+set_t fight(const set_t &array, size_t distance)
+{
+    set_t dead_list;
+
+    for (const auto &attacker : array)
+        for (const auto &defender : array)
+            if ((attacker != defender) && (attacker->is_close(defender, distance)))
+            {
+                bool success = defender->accept(attacker);
+                if (success)
+                    dead_list.insert(defender);
+            }
+
+    return dead_list;
+}
+
+int main()
+{
+    set_t array; // монстры
+
+    // Гененрируем начальное распределение монстров
+    std::cout << "Generating ..." << std::endl;
+    for (size_t i = 0; i < 100; ++i)
+        array.insert(factory(NpcType(std::rand() % 3 + 1),
+                             std::rand() % 100,
+                             std::rand() % 100));
+    std::cout << "Saving ..." << std::endl;
+
+    save(array, "npc.txt");
+
+    std::cout << "Loading ..." << std::endl;
+    array = load("npc.txt");
+
+    std::cout << "Fighting ..." << std::endl
+              << array;
+
+    for (size_t distance = 20; (distance <= 100) && !array.empty(); distance += 10)
+    {
+        auto dead_list = fight(array, distance);
+        for (auto &d : dead_list)
+            array.erase(d);
+        std::cout << "Fight stats ----------" << std::endl
+                  << "distance: " << distance << std::endl
+                  << "killed: " << dead_list.size() << std::endl
+                  << std::endl
+                  << std::endl;
     }
+
+    std::cout << "Survivors:" << array;
 
     return 0;
 }
