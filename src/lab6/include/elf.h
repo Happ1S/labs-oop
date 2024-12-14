@@ -1,16 +1,18 @@
-#pragma once
-#include "npc.h"
-#include "fight_visitor.h"
+#ifndef ELF_H
+#define ELF_H
 
-struct Elf : public NPC {
+#include "npc.h"
+
+class Elf : public NPC
+{
+public:
     Elf(int x, int y);
     Elf(std::istream &is);
+    NpcType getType() const override { return ElfType; }
 
-    void print() override;
-    void accept(FightVisitor &visitor) override;
-    bool fight(std::shared_ptr<NPC> other) override;
-
-    void save(std::ostream &os) override;
-
-    friend std::ostream &operator<<(std::ostream &os, Elf &bear);
+    void accept(Visitor &visitor, const std::shared_ptr<NPC> &defender) override;
+    void save(std::ostream &os) const override;
+    void print() const override;
 };
+
+#endif 

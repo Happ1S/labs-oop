@@ -1,52 +1,22 @@
-#include "include/bear.h"
 #include "include/elf.h"
-#include "include/bandit.h"
-#include "include/fight_visitor.h"
+#include "include/visitor.h"
 
-Elf::Elf(int x, int y) : NPC(ElfType, x, y) {}
-Elf::Elf(std::istream &is) : NPC(ElfType, is) {}
+Elf::Elf(int x, int y) : NPC(x, y, "Elf") {}
 
-void Elf::print() {
-    std::cout << *this;
+Elf::Elf(std::istream &is) : NPC(is) {}
+
+void Elf::accept(Visitor &visitor, const std::shared_ptr<NPC> &defender)
+{
+    visitor.visit(*this, defender);
 }
 
-void Elf::accept(FightVisitor &visitor) {
-    visitor.visit(std::static_pointer_cast<Elf>(shared_from_this()));
-}
-
-void Elf::save(std::ostream &os) {
-    os << ElfType << std::endl;
+void Elf::save(std::ostream &os) const
+{
+    os << ElfType << " ";
     NPC::save(os);
 }
 
-class FightExecutor : public FightVisitor {
-public:
-    bool success = false;
-
-    void visit(std::shared_ptr<Bear> bear) override {
-        // Custom logic for fighting a bear
-        success = false;
-    }
-
-    void visit(std::shared_ptr<Elf> elf) override {
-        // Custom logic for fighting an elf
-        success = false;
-    }
-
-    void visit(std::shared_ptr<Bandit> bandit) override {
-        // Custom logic for fighting another bandit
-        success = true;
-    }
-};
-
-bool Elf::fight(std::shared_ptr<NPC> other) {
-    FightExecutor executor;
-    other->accept(executor);
-    fight_notify(other, executor.success);
-    return executor.success;
-}
-
-std::ostream &operator<<(std::ostream &os, Elf &elf) {
-    os << "elf: " << *static_cast<NPC *>(&elf) << std::endl;
-    return os;
+void Elf::print() const
+{
+    std::cout << "Elf: " << name << " at (" << x << ", " << y << ")" << std::endl;
 }

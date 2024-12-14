@@ -1,45 +1,57 @@
-#pragma once
+#ifndef NPC_H
+#define NPC_H
 
-#include <iostream>
+#include <string>
 #include <memory>
-#include <vector>
+#include <iostream>
 #include <set>
-#include <cmath>
+#include <vector>
 
-struct NPC;
-struct FightVisitor;
 
-enum NpcType {
-    Unknown = 0,
+class Bear;
+class Elf;
+class Bandit;
+class Visitor;
+
+
+enum NpcType
+{
     BearType = 1,
-    ElfType = 2,
-    BanditType = 3
+    ElfType,
+    BanditType
 };
 
-struct IFightObserver {
-    virtual void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) = 0;
+
+class IFightObserver
+{
+public:
+    virtual void on_fight(const std::shared_ptr<class NPC> attacker, const std::shared_ptr<class NPC> defender, bool win) = 0;
 };
 
-struct NPC : public std::enable_shared_from_this<NPC> {
-    NpcType type;
-    int x{0};
-    int y{0};
+
+class NPC : public std::enable_shared_from_this<NPC>
+{
+public:
+    int x, y;
+    std::string name;
     std::vector<std::shared_ptr<IFightObserver>> observers;
 
-    NPC(NpcType t, int _x, int _y);
-    NPC(NpcType t, std::istream &is);
+public:
 
-    void subscribe(std::shared_ptr<IFightObserver> observer);
-    void fight_notify(const std::shared_ptr<NPC> defender, bool win);
-    virtual bool is_close(const std::shared_ptr<NPC> &other, size_t distance) const;
+    NPC(int x, int y, const std::string &name);
+    NPC(std::istream &is);
+    virtual ~NPC() = default;
+    virtual NpcType getType() const = 0;
+    
+    virtual void accept(Visitor &visitor, const std::shared_ptr<NPC> &defender) = 0;
+    virtual void save(std::ostream &os) const;
+    virtual void print() const;
 
-    virtual void accept(FightVisitor &visitor) = 0;
-    virtual bool fight(std::shared_ptr<NPC> other) = 0;
-    virtual void print() = 0;
-
-    virtual void save(std::ostream &os);
-
-    friend std::ostream &operator<<(std::ostream &os, NPC &npc);
+    bool is_close(const std::shared_ptr<NPC> &other, size_t distance) const;
+    void subscribe(const std::shared_ptr<IFightObserver> &observer);
+    void notify(const std::shared_ptr<NPC> &defender, bool win);
 };
 
-std::ostream &operator<<(std::ostream &os, const NPC &npc);
+using set_t = std::set<std::shared_ptr<NPC>>;
+
+#endif 
