@@ -9,8 +9,6 @@
 #include <set>
 #include <math.h>
 
-#include "fight_visitor.h"
-
 // type for npcs
 struct NPC;
 struct Bear;
@@ -44,8 +42,9 @@ struct NPC : public std::enable_shared_from_this<NPC>
     void fight_notify(const std::shared_ptr<NPC> defender,bool win);
     virtual bool is_close(const std::shared_ptr<NPC> &other, size_t distance) const;
 
-    virtual void accept(FightVisitor &visitor) = 0;
-    bool fight(const std::shared_ptr<NPC> &other);
+    virtual bool is_bear() const;
+    virtual bool is_elf() const;
+    virtual bool is_bandit() const ;
 
     virtual bool fight(std::shared_ptr<Bear> other) = 0;
     virtual bool fight(std::shared_ptr<Elf> other) = 0;

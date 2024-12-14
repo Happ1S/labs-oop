@@ -1,5 +1,4 @@
 #include "include/npc.h"
-#include "include/fight_visitor_impl.h"
 
 NPC::NPC(NpcType t, int _x, int _y) : type(t), x(_x), y(_y) {}
 NPC::NPC(NpcType t, std::istream &is) : type(t)
@@ -27,11 +26,17 @@ bool NPC::is_close(const std::shared_ptr<NPC> &other, size_t distance) const
         return false;
 }
 
-bool NPC::fight(const std::shared_ptr<NPC> &other) {
-    bool success = false;
-    FightVisitorImpl visitor(shared_from_this(), success);
-    other->accept(visitor);
-    return success;
+bool NPC::is_bear() const
+{
+    return false;
+}
+bool NPC::is_elf() const
+{
+    return false;
+}
+bool NPC::is_bandit() const
+{
+    return false;
 }
 
 void NPC::save(std::ostream &os)

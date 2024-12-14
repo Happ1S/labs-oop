@@ -2,13 +2,12 @@
 #include "src/lab6/include/bear.h"
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
-#include "src/lab6/include/fight_visitor_impl.h"
 
 // Text Observer
 class TextObserver : public IFightObserver
 {
 private:
-    TextObserver() {};
+    TextObserver(){};
 
 public:
     static std::shared_ptr<IFightObserver> get()
@@ -118,25 +117,33 @@ std::ostream &operator<<(std::ostream &os, const set_t &array)
     return os;
 }
 
-// Refactored fight method using Visitor pattern
+
+// ВНИМАНИЕ: метод осуществляющий сражение написан неправильно!
+// Переделайте его на использование паттерна Visitor
+// То есть внутри цикла вместо кучи условий должно быть:
+//
+// success = defender->accept(attacker);
+//
+// В NPC методы типа is_dragon - станут не нужны
+
 set_t fight(const set_t &array, size_t distance)
 {
     set_t dead_list;
 
     for (const auto &attacker : array)
-    {
         for (const auto &defender : array)
-        {
             if ((attacker != defender) && (attacker->is_close(defender, distance)))
             {
                 bool success{false};
-                FightVisitorImpl visitor(attacker, success);
-                defender->accept(visitor);
+                if (defender->is_bear())
+                    success = attacker->fight(std::dynamic_pointer_cast<Bear>(defender));
+                if (defender->is_elf())
+                    success = attacker->fight(std::dynamic_pointer_cast<Elf>(defender));
+                if (defender->is_bandit())
+                    success = attacker->fight(std::dynamic_pointer_cast<Bandit>(defender));
                 if (success)
                     dead_list.insert(defender);
             }
-        }
-    }
 
     return dead_list;
 }
@@ -170,6 +177,7 @@ int main()
                   << "distance: " << distance << std::endl
                   << "killed: " << dead_list.size() << std::endl
                   << std::endl << std::endl;
+
     }
 
     std::cout << "Survivors:" << array;
