@@ -1,20 +1,14 @@
 #pragma once
 #include "npc.h"
 #include "fight_visitor.h"
-#include "elf.h"
-#include "bandit.h"
 
 struct Bear : public NPC {
     Bear(int x, int y);
     Bear(std::istream &is);
 
     void print() override;
-
-    bool is_bear() const override;
-    
-    bool fight(std::shared_ptr<Bear> other) override;
-    bool fight(std::shared_ptr<Elf> other) override;
-    bool fight(std::shared_ptr<Bandit> other) override;
+    void accept(FightVisitor &visitor) override;
+    bool fight(std::shared_ptr<NPC> other) override;
 
     void save(std::ostream &os) override;
 

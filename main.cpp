@@ -2,24 +2,21 @@
 #include "src/lab6/include/bear.h"
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
+#include "src/lab6/include/fight_visitor.h"
 
 // Text Observer
-class TextObserver : public IFightObserver
-{
+class TextObserver : public IFightObserver {
 private:
-    TextObserver(){};
+    TextObserver() {};
 
 public:
-    static std::shared_ptr<IFightObserver> get()
-    {
+    static std::shared_ptr<IFightObserver> get() {
         static TextObserver instance;
         return std::shared_ptr<IFightObserver>(&instance, [](IFightObserver *) {});
     }
 
-    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
-    {
-        if (win)
-        {
+    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override {
+        if (win) {
             std::cout << std::endl
                       << "Murder --------" << std::endl;
             attacker->print();
@@ -29,14 +26,11 @@ public:
 };
 
 // Фабрики -----------------------------------
-std::shared_ptr<NPC> factory(std::istream &is)
-{
+std::shared_ptr<NPC> factory(std::istream &is) {
     std::shared_ptr<NPC> result;
     int type{0};
-    if (is >> type)
-    {
-        switch (type)
-        {
+    if (is >> type) {
+        switch (type) {
         case BearType:
             result = std::make_shared<Bear>(is);
             break;
@@ -47,8 +41,7 @@ std::shared_ptr<NPC> factory(std::istream &is)
             result = std::make_shared<Bandit>(is);
             break;
         }
-    }
-    else
+    } else
         std::cerr << "unexpected NPC type:" << type << std::endl;
 
     if (result)
@@ -57,12 +50,10 @@ std::shared_ptr<NPC> factory(std::istream &is)
     return result;
 }
 
-std::shared_ptr<NPC> factory(NpcType type, int x, int y)
-{
+std::shared_ptr<NPC> factory(NpcType type, int x, int y) {
     std::cout << "Type:" << (int)type << std::endl;
     std::shared_ptr<NPC> result;
-    switch (type)
-    {
+    switch (type) {
     case BearType:
         result = std::make_shared<Bear>(x, y);
         break;
@@ -82,8 +73,7 @@ std::shared_ptr<NPC> factory(NpcType type, int x, int y)
 }
 
 // save array to file
-void save(const set_t &array, const std::string &filename)
-{
+void save(const set_t &array, const std::string &filename) {
     std::ofstream fs(filename);
     fs << array.size() << std::endl;
     for (auto &n : array)
@@ -92,64 +82,68 @@ void save(const set_t &array, const std::string &filename)
     fs.close();
 }
 
-set_t load(const std::string &filename)
-{
+set_t load(const std::string &filename) {
     set_t result;
     std::ifstream is(filename);
-    if (is.good() && is.is_open())
-    {
+    if (is.good() && is.is_open()) {
         int count;
         is >> count;
         for (int i = 0; i < count; ++i)
             result.insert(factory(is));
         is.close();
-    }
-    else
+    } else
         std::cerr << "Error: " << std::strerror(errno) << std::endl;
     return result;
 }
 
 // print to screen
-std::ostream &operator<<(std::ostream &os, const set_t &array)
-{
+std::ostream &operator<<(std::ostream &os, const set_t &array) {
     for (auto &n : array)
         n->print();
     return os;
 }
 
-
 // ВНИМАНИЕ: метод осуществляющий сражение написан неправильно!
 // Переделайте его на использование паттерна Visitor
 // То есть внутри цикла вместо кучи условий должно быть:
-//
 // success = defender->accept(attacker);
-//
 // В NPC методы типа is_dragon - станут не нужны
 
-set_t fight(const set_t &array, size_t distance)
-{
+struct FightExecutor : public FightVisitor {
+    std::shared_ptr<NPC> attacker;
+    bool success = false;
+
+    FightExecutor(std::shared_ptr<NPC> a) : attacker(a) {}
+
+    void visit(std::shared_ptr<Bear> bear) override {
+        success = attacker->fight(bear);
+    }
+
+    void visit(std::shared_ptr<Elf> elf) override {
+        success = attacker->fight(elf);
+    }
+
+    void visit(std::shared_ptr<Bandit> bandit) override {
+        success = attacker->fight(bandit);
+    }
+};
+
+set_t fight(const set_t &array, size_t distance) {
     set_t dead_list;
 
     for (const auto &attacker : array)
         for (const auto &defender : array)
-            if ((attacker != defender) && (attacker->is_close(defender, distance)))
-            {
-                bool success{false};
-                if (defender->is_bear())
-                    success = attacker->fight(std::dynamic_pointer_cast<Bear>(defender));
-                if (defender->is_elf())
-                    success = attacker->fight(std::dynamic_pointer_cast<Elf>(defender));
-                if (defender->is_bandit())
-                    success = attacker->fight(std::dynamic_pointer_cast<Bandit>(defender));
-                if (success)
+            if ((attacker != defender) && (attacker->is_close(defender, distance))) {
+                FightExecutor executor(attacker);
+                defender->accept(executor);
+                if (executor.success)
                     dead_list.insert(defender);
             }
 
     return dead_list;
 }
 
-int main()
-{
+int main() {
     set_t array; // монстры
 
     // Гененрируем начальное распределение монстров
@@ -168,16 +162,15 @@ int main()
     std::cout << "Fighting ..." << std::endl
               << array;
 
-    for (size_t distance = 20; (distance <= 100) && !array.empty(); distance += 10)
-    {
+    for (size_t distance = 20; (distance <= 100) && !array.empty(); distance += 10) {
         auto dead_list = fight(array, distance);
         for (auto &d : dead_list)
             array.erase(d);
         std::cout << "Fight stats ----------" << std::endl
                   << "distance: " << distance << std::endl
                   << "killed: " << dead_list.size() << std::endl
-                  << std::endl << std::endl;
-
+                  << std::endl
+                  << std::endl;
     }
 
     std::cout << "Survivors:" << array;
