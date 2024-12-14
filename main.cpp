@@ -3,16 +3,25 @@
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
 #include "src/lab6/include/fight_visitor.h"
+#include <fstream>
+#include <set>
+#include <memory>
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <cstring>
+#include <iterator>
+
+using set_t = std::set<std::shared_ptr<NPC>>;
 
 // Text Observer
 class TextObserver : public IFightObserver {
-private:
-    TextObserver() {};
-
 public:
+    TextObserver() {}  // make it public
+
     static std::shared_ptr<IFightObserver> get() {
-        static TextObserver instance;
-        return std::shared_ptr<IFightObserver>(&instance, [](IFightObserver *) {});
+        static std::shared_ptr<TextObserver> instance = std::make_shared<TextObserver>();
+        return instance;
     }
 
     void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override {
@@ -24,6 +33,7 @@ public:
         }
     }
 };
+
 
 // Фабрики -----------------------------------
 std::shared_ptr<NPC> factory(std::istream &is) {
@@ -40,12 +50,17 @@ std::shared_ptr<NPC> factory(std::istream &is) {
         case BanditType:
             result = std::make_shared<Bandit>(is);
             break;
+        default:
+            std::cerr << "unexpected NPC type:" << type << std::endl;
+            break;
         }
-    } else
-        std::cerr << "unexpected NPC type:" << type << std::endl;
+    } else {
+        std::cerr << "Error reading NPC type." << std::endl;
+    }
 
-    if (result)
+    if (result) {
         result->subscribe(TextObserver::get());
+    }
 
     return result;
 }
@@ -64,10 +79,12 @@ std::shared_ptr<NPC> factory(NpcType type, int x, int y) {
         result = std::make_shared<Bandit>(x, y);
         break;
     default:
+        std::cerr << "Error: Unknown NPC type." << std::endl;
         break;
     }
-    if (result)
+    if (result) {
         result->subscribe(TextObserver::get());
+    }
 
     return result;
 }
@@ -75,9 +92,15 @@ std::shared_ptr<NPC> factory(NpcType type, int x, int y) {
 // save array to file
 void save(const set_t &array, const std::string &filename) {
     std::ofstream fs(filename);
+    if (!fs.is_open()) {
+        std::cerr << "Error opening file for saving: " << filename << std::endl;
+        return;
+    }
+
     fs << array.size() << std::endl;
-    for (auto &n : array)
+    for (auto &n : array) {
         n->save(fs);
+    }
     fs.flush();
     fs.close();
 }
@@ -88,18 +111,26 @@ set_t load(const std::string &filename) {
     if (is.good() && is.is_open()) {
         int count;
         is >> count;
-        for (int i = 0; i < count; ++i)
-            result.insert(factory(is));
+        for (int i = 0; i < count; ++i) {
+            auto npc = factory(is);
+            if (npc) {
+                result.insert(npc);
+            } else {
+                std::cerr << "Error loading NPC at index " << i << std::endl;
+            }
+        }
         is.close();
-    } else
+    } else {
         std::cerr << "Error: " << std::strerror(errno) << std::endl;
+    }
     return result;
 }
 
 // print to screen
 std::ostream &operator<<(std::ostream &os, const set_t &array) {
-    for (auto &n : array)
+    for (auto &n : array) {
         n->print();
+    }
     return os;
 }
 
@@ -116,29 +147,40 @@ struct FightExecutor : public FightVisitor {
     FightExecutor(std::shared_ptr<NPC> a) : attacker(a) {}
 
     void visit(std::shared_ptr<Bear> bear) override {
-        success = attacker->fight(bear);
+        if (attacker) {
+            success = attacker->fight(bear);
+        }
     }
 
     void visit(std::shared_ptr<Elf> elf) override {
-        success = attacker->fight(elf);
+        if (attacker) {
+            success = attacker->fight(elf);
+        }
     }
 
     void visit(std::shared_ptr<Bandit> bandit) override {
-        success = attacker->fight(bandit);
+        if (attacker) {
+            success = attacker->fight(bandit);
+        }
     }
 };
 
 set_t fight(const set_t &array, size_t distance) {
     set_t dead_list;
 
-    for (const auto &attacker : array)
-        for (const auto &defender : array)
+    for (const auto &attacker : array) {
+        for (const auto &defender : array) {
             if ((attacker != defender) && (attacker->is_close(defender, distance))) {
-                FightExecutor executor(attacker);
-                defender->accept(executor);
-                if (executor.success)
-                    dead_list.insert(defender);
+                if (attacker && defender) {
+                    FightExecutor executor(attacker);
+                    defender->accept(executor);
+                    if (executor.success) {
+                        dead_list.insert(defender);
+                    }
+                }
             }
+        }
+    }
 
     return dead_list;
 }
@@ -148,12 +190,13 @@ int main() {
 
     // Гененрируем начальное распределение монстров
     std::cout << "Generating ..." << std::endl;
-    for (size_t i = 0; i < 100; ++i)
+    for (size_t i = 0; i < 100; ++i) {
         array.insert(factory(NpcType(std::rand() % 3 + 1),
                              std::rand() % 100,
                              std::rand() % 100));
-    std::cout << "Saving ..." << std::endl;
+    }
 
+    std::cout << "Saving ..." << std::endl;
     save(array, "npc.txt");
 
     std::cout << "Loading ..." << std::endl;
@@ -164,8 +207,13 @@ int main() {
 
     for (size_t distance = 20; (distance <= 100) && !array.empty(); distance += 10) {
         auto dead_list = fight(array, distance);
-        for (auto &d : dead_list)
-            array.erase(d);
+        for (auto &d : dead_list) {
+            if (array.find(d) != array.end()) {
+                array.erase(d);
+            } else {
+                std::cerr << "Error: NPC not found during removal." << std::endl;
+            }
+        }
         std::cout << "Fight stats ----------" << std::endl
                   << "distance: " << distance << std::endl
                   << "killed: " << dead_list.size() << std::endl

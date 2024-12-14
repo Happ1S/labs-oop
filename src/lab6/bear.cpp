@@ -10,6 +10,10 @@ void Bear::print() {
     std::cout << *this;
 }
 
+void Bear::accept(FightVisitor &visitor) {
+    visitor.visit(std::static_pointer_cast<Bear>(shared_from_this()));
+}
+
 void Bear::save(std::ostream &os) {
     os << BearType << std::endl;
     NPC::save(os);

@@ -10,6 +10,10 @@ void Elf::print() {
     std::cout << *this;
 }
 
+void Elf::accept(FightVisitor &visitor) {
+    visitor.visit(std::static_pointer_cast<Elf>(shared_from_this()));
+}
+
 void Elf::save(std::ostream &os) {
     os << ElfType << std::endl;
     NPC::save(os);

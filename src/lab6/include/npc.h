@@ -6,6 +6,7 @@
 #include <set>
 #include <cmath>
 
+struct NPC;
 struct FightVisitor;
 
 enum NpcType {
