@@ -1,220 +1,117 @@
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <mutex>
+#include <shared_mutex>
+#include <random>
+#include <chrono>
 #include "src/lab6/include/npc.h"
-#include "src/lab6/include/bear.h"
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
+#include "src/lab6/include/bear.h"
 #include "src/lab6/include/visitor.h"
 
-#include <fstream>
-#include <cstdlib>
-#include <cstring>
+constexpr int MAP_SIZE = 100;
+constexpr int NUM_NPCS = 50;
+constexpr int FIGHT_DISTANCE = 2;
+constexpr int GAME_DURATION = 30;
 
+std::vector<std::shared_ptr<NPC>> npcs;
+std::shared_mutex npc_mutex;
+std::mutex cout_mutex;
+bool game_running = true;
 
-class TextObserver : public IFightObserver
-{
-private:
-    TextObserver(){};
-
-public:
-    static std::shared_ptr<IFightObserver> get()
-    {
-        static std::shared_ptr<IFightObserver> instance(new TextObserver());
-        return instance;
-    }
-
-    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
-    {
-        if (win)
-        {
-            std::cout << std::endl
-                      << "Murder --------" << std::endl;
-            attacker->print();
-            defender->print();
-        }
-    }
-};
-
-
-class FileObserver : public IFightObserver
-{
-private:
-    std::ofstream log_file;
-
-    FileObserver() : log_file("log.txt") {}
-
-public:
-    ~FileObserver()
-    {
-        if (log_file.is_open())
-            log_file.close();
-    }
-
-    static std::shared_ptr<IFightObserver> get()
-    {
-        static std::shared_ptr<IFightObserver> instance(new FileObserver());
-        return instance;
-    }
-
-    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override
-    {
-        if (win && log_file.is_open())
-        {
-            log_file << "Murder --------" << std::endl;
-            
-            log_file << "Attacker: " << attacker->name << " at (" << attacker->x << ", " << attacker->y << ")" << std::endl;
-            log_file << "Defender: " << defender->name << " at (" << defender->x << ", " << defender->y << ")" << std::endl;
-        }
-    }
-};
-
-
-std::shared_ptr<NPC> factory(std::istream &is)
-{
-    std::shared_ptr<NPC> result;
-    int type{0};
-    if (is >> type)
-    {
-        switch (type)
-        {
-        case BearType:
-            result = std::make_shared<Bear>(is);
-            break;
-        case ElfType:
-            result = std::make_shared<Elf>(is);
-            break;
-        case BanditType:
-            result = std::make_shared<Bandit>(is);
-            break;
-        }
-    }
-    else
-        std::cerr << "unexpected NPC type:" << type << std::endl;
-
-    if (result)
-    {
-        result->subscribe(TextObserver::get());
-        result->subscribe(FileObserver::get());
-    }
-
-    return result;
-}
-
-std::shared_ptr<NPC> factory(NpcType type, int x, int y)
-{
-    std::shared_ptr<NPC> result;
-    switch (type)
-    {
-    case BearType:
-        result = std::make_shared<Bear>(x, y);
-        break;
-    case ElfType:
-        result = std::make_shared<Elf>(x, y);
-        break;
-    case BanditType:
-        result = std::make_shared<Bandit>(x, y);
-        break;
-    default:
-        break;
-    }
-    if (result)
-    {
-        result->subscribe(TextObserver::get());
-        result->subscribe(FileObserver::get());
-    }
-
-    return result;
-}
-
-
-void save(const set_t &array, const std::string &filename)
-{
-    std::ofstream fs(filename);
-    fs << array.size() << std::endl;
-    for (auto &n : array)
-        n->save(fs);
-    fs.flush();
-    fs.close();
-}
-
-set_t load(const std::string &filename)
-{
-    set_t result;
-    std::ifstream is(filename);
-    if (is.good() && is.is_open())
-    {
-        int count;
-        is >> count;
-        for (int i = 0; i < count; ++i)
-            result.insert(factory(is));
-        is.close();
-    }
-    else
-        std::cerr << "Error: " << std::strerror(errno) << std::endl;
-    return result;
-}
-
-
-std::ostream &operator<<(std::ostream &os, const set_t &array)
-{
-    for (auto &n : array)
-        n->print();
-    return os;
-}
-
-
-set_t fight(const set_t &array, size_t distance)
-{
-    set_t dead_list;
-
-    for (const auto &attacker : array)
-    {
-        for (const auto &defender : array)
-        {
-            if ((attacker != defender) && (attacker->is_close(defender, distance)))
-            {
-                Visitor visitor;
-                attacker->accept(visitor, defender);
-                if (visitor.is_success())
-                    dead_list.insert(defender);
+void move_npcs() {
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(-1, 1);
+    while (game_running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::unique_lock lock(npc_mutex);
+        for (auto &npc : npcs) {
+            if (npc->getType() != BearType) { 
+                npc->x = std::clamp(npc->x + distribution(generator), 0, MAP_SIZE - 1);
+                npc->y = std::clamp(npc->y + distribution(generator), 0, MAP_SIZE - 1);
             }
         }
     }
-
-    return dead_list;
 }
 
-int main()
-{
-    set_t array; 
+void combat_npcs() {
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> dice_roll(1, 6);
+    Visitor visitor;
+    while (game_running) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::unique_lock lock(npc_mutex);
+        for (size_t i = 0; i < npcs.size(); ++i) {
+            for (size_t j = i + 1; j < npcs.size(); ++j) {
+                if (npcs[i]->is_close(npcs[j], FIGHT_DISTANCE)) {
+                    int attack = dice_roll(generator);
+                    int defense = dice_roll(generator);
+                    if (attack > defense) {
+                        npcs[i]->accept(visitor, npcs[j]);
+                        std::lock_guard cout_lock(cout_mutex);
+                        std::cout << npcs[i]->name << " attacked " << npcs[j]->name << " and won!\n";
+                    } else {
+                        std::lock_guard cout_lock(cout_mutex);
+                        std::cout << npcs[i]->name << " attacked " << npcs[j]->name << " and lost.\n";
+                    }
+                }
+            }
+        }
+    }
+}
 
-    
-    std::cout << "Generating ..." << std::endl;
-    for (size_t i = 0; i < 100; ++i)
-        array.insert(factory(NpcType(std::rand() % 3 + 1),
-                             std::rand() % 500,
-                             std::rand() % 500));
-    std::cout << "Saving ..." << std::endl;
+void print_map() {
+    while (game_running) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::shared_lock lock(npc_mutex);
+        std::lock_guard cout_lock(cout_mutex);
+        std::cout << "Map state:\n";
+        for (const auto &npc : npcs) {
+            if (npc->getType() != BearType) { 
+                std::cout << npc->name << " at (" << npc->x << ", " << npc->y << ")\n";
+            }
+        }
+        std::cout << std::endl;
+    }
+}
 
-    save(array, "npc.txt");
+int main() {
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0, MAP_SIZE - 1);
+    std::uniform_int_distribution<int> npc_type_distribution(1, 3); 
 
-    std::cout << "Loading ..." << std::endl;
-    array = load("npc.txt");
-
-    std::cout << "Fighting ..." << std::endl
-              << array;
-
-    for (size_t distance = 20; (distance <= 100) && !array.empty(); distance += 10)
-    {
-        auto dead_list = fight(array, distance);
-        for (auto &d : dead_list)
-            array.erase(d);
-        std::cout << "Fight stats ----------" << std::endl
-                  << "distance: " << distance << std::endl
-                  << "killed: " << dead_list.size() << std::endl
-                  << std::endl
-                  << std::endl;
+    for (int i = 0; i < NUM_NPCS; ++i) {
+        int x = distribution(generator);
+        int y = distribution(generator);
+        int npc_type = npc_type_distribution(generator);
+        if (npc_type == 1) {
+            npcs.push_back(std::make_shared<Elf>(x, y));
+        } else if (npc_type == 2) {
+            npcs.push_back(std::make_shared<Bandit>(x, y));
+        } else {
+            npcs.push_back(std::make_shared<Bear>(x, y));
+        }
     }
 
-    std::cout << "Survivors:" << array;
+    std::thread move_thread(move_npcs);
+    std::thread combat_thread(combat_npcs);
+    std::thread print_thread(print_map);
+
+    std::this_thread::sleep_for(std::chrono::seconds(GAME_DURATION));
+    game_running = false;
+
+    move_thread.join();
+    combat_thread.join();
+    print_thread.join();
+
+    std::cout << "Survivors:\n";
+    for (const auto &npc : npcs) {
+        if (npc->getType() != BearType) { 
+            std::cout << npc->name << " at (" << npc->x << ", " << npc->y << ")\n";
+        }
+    }
 
     return 0;
 }
