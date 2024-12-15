@@ -27,6 +27,37 @@ std::map<NpcType, std::pair<int, int>> kill_table = {
     {BanditType, {10, 10}}
 };
 
+class TextObserver : public IFightObserver {
+public:
+    void on_fight(const std::shared_ptr<NPC> attacker, const std::shared_ptr<NPC> defender, bool win) override {
+        if (win) {
+            std::lock_guard<std::mutex> lck(cout_mutex);
+            std::cout << attacker->name << " defeated " << defender->name << "!\n";
+        }
+    }
+};
+
+std::shared_ptr<NPC> factory(NpcType type, int x, int y) {
+    std::shared_ptr<NPC> result;
+    switch (type) {
+    case BearType:
+        result = std::make_shared<Bear>(x, y);
+        break;
+    case ElfType:
+        result = std::make_shared<Elf>(x, y);
+        break;
+    case BanditType:
+        result = std::make_shared<Bandit>(x, y);
+        break;
+    default:
+        break;
+    }
+    if (result) {
+        result->subscribe(std::make_shared<TextObserver>());
+    }
+    return result;
+}
+
 void move_npcs() {
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(-1, 1);
@@ -94,13 +125,7 @@ int main() {
         int x = distribution(generator);
         int y = distribution(generator);
         int npc_type = npc_type_distribution(generator);
-        if (npc_type == 1) {
-            npcs.push_back(std::make_shared<Elf>(x, y));
-        } else if (npc_type == 2) {
-            npcs.push_back(std::make_shared<Bandit>(x, y));
-        } else {
-            npcs.push_back(std::make_shared<Bear>(x, y));
-        }
+        npcs.push_back(factory(NpcType(npc_type), x, y));
     }
 
     std::thread move_thread(move_npcs);
