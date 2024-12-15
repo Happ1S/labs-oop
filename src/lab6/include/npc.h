@@ -34,6 +34,7 @@ class NPC : public std::enable_shared_from_this<NPC>
 public:
     int x, y;
     std::string name;
+    bool alive;
     std::vector<std::shared_ptr<IFightObserver>> observers;
 
 public:
@@ -50,6 +51,7 @@ public:
     bool is_close(const std::shared_ptr<NPC> &other, size_t distance) const;
     void subscribe(const std::shared_ptr<IFightObserver> &observer);
     void notify(const std::shared_ptr<NPC> &defender, bool win);
+    bool is_alive() const { return alive; }
 };
 
 using set_t = std::set<std::shared_ptr<NPC>>;

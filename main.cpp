@@ -6,6 +6,7 @@
 #include <random>
 #include <chrono>
 #include <map>
+#include <map>
 #include "src/lab6/include/npc.h"
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
@@ -69,6 +70,8 @@ void move_npcs() {
             if (npc->getType() != BearType) { 
                 npc->x = std::clamp(npc->x + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
                 npc->y = std::clamp(npc->y + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
+                npc->x = std::clamp(npc->x + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
+                npc->y = std::clamp(npc->y + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
             }
         }
     }
@@ -125,6 +128,7 @@ int main() {
         int x = distribution(generator);
         int y = distribution(generator);
         int npc_type = npc_type_distribution(generator);
+        npcs.push_back(factory(NpcType(npc_type), x, y));
         npcs.push_back(factory(NpcType(npc_type), x, y));
     }
 
