@@ -33,7 +33,7 @@ public:
         if (win) {
             std::lock_guard<std::mutex> lck(cout_mutex);
             std::cout << attacker->name << " defeated " << defender->name << "!\n";
-            defender->alive = false; // отметить защитника как мертвого
+            defender->alive = false; 
         }
     }
 };
@@ -54,7 +54,7 @@ std::shared_ptr<NPC> factory(NpcType type, int x, int y) {
         break;
     }
     if (result) {
-        result->alive = true; // инициализировать как живого
+        result->alive = true; 
         result->subscribe(std::make_shared<TextObserver>());
     }
     return result;
@@ -67,7 +67,7 @@ void move_npcs() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         std::unique_lock lock(npc_mutex);
         for (auto &npc : npcs) {
-            if (!npc->is_alive()) continue; // пропустить мертвых NPC
+            if (!npc->is_alive()) continue; 
             int move_distance = kill_table[npc->getType()].first;
             if (npc->getType() != BearType) { 
                 npc->x = std::clamp(npc->x + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
@@ -85,10 +85,10 @@ void combat_npcs() {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         std::unique_lock lock(npc_mutex);
         for (size_t i = 0; i < npcs.size(); ++i) {
-            if (!npcs[i]->is_alive()) continue; // пропустить мертвых NPC
+            if (!npcs[i]->is_alive()) continue; 
             int kill_distance = kill_table[npcs[i]->getType()].second;
             for (size_t j = i + 1; j < npcs.size(); ++j) {
-                if (!npcs[j]->is_alive()) continue; // пропустить мертвых NPC
+                if (!npcs[j]->is_alive()) continue; 
                 if (npcs[i]->is_close(npcs[j], kill_distance)) {
                     int attack = dice_roll(generator);
                     int defense = dice_roll(generator);
@@ -146,7 +146,7 @@ int main() {
 
     std::cout << "Survivors:\n";
     for (const auto &npc : npcs) {
-        if (npc->is_alive()) { // выводить только живых NPC
+        if (npc->is_alive()) { 
             std::cout << npc->name << " at (" << npc->x << ", " << npc->y << ")\n";
         }
     }
