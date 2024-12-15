@@ -5,6 +5,7 @@
 #include <shared_mutex>
 #include <random>
 #include <chrono>
+#include <map>
 #include "src/lab6/include/npc.h"
 #include "src/lab6/include/elf.h"
 #include "src/lab6/include/bandit.h"
@@ -13,13 +14,18 @@
 
 constexpr int MAP_SIZE = 100;
 constexpr int NUM_NPCS = 50;
-constexpr int FIGHT_DISTANCE = 2;
 constexpr int GAME_DURATION = 30;
 
 std::vector<std::shared_ptr<NPC>> npcs;
 std::shared_mutex npc_mutex;
 std::mutex cout_mutex;
 bool game_running = true;
+
+std::map<NpcType, std::pair<int, int>> kill_table = {
+    {BearType, {5, 10}},
+    {ElfType, {10, 50}},
+    {BanditType, {10, 10}}
+};
 
 void move_npcs() {
     std::default_random_engine generator;
@@ -28,9 +34,10 @@ void move_npcs() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         std::unique_lock lock(npc_mutex);
         for (auto &npc : npcs) {
+            int move_distance = kill_table[npc->getType()].first;
             if (npc->getType() != BearType) { 
-                npc->x = std::clamp(npc->x + distribution(generator), 0, MAP_SIZE - 1);
-                npc->y = std::clamp(npc->y + distribution(generator), 0, MAP_SIZE - 1);
+                npc->x = std::clamp(npc->x + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
+                npc->y = std::clamp(npc->y + distribution(generator) * move_distance, 0, MAP_SIZE - 1);
             }
         }
     }
@@ -44,8 +51,9 @@ void combat_npcs() {
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         std::unique_lock lock(npc_mutex);
         for (size_t i = 0; i < npcs.size(); ++i) {
+            int kill_distance = kill_table[npcs[i]->getType()].second;
             for (size_t j = i + 1; j < npcs.size(); ++j) {
-                if (npcs[i]->is_close(npcs[j], FIGHT_DISTANCE)) {
+                if (npcs[i]->is_close(npcs[j], kill_distance)) {
                     int attack = dice_roll(generator);
                     int defense = dice_roll(generator);
                     if (attack > defense) {
